@@ -3,6 +3,10 @@ import 'dart:math';
 import 'package:crypto/crypto.dart' as crypto;
 
 class Auth {
+  static const int tokenExpirationYear = 31536000;
+  static const int tokenExpirationHour = 3600;
+  static const int tokenExpirationWeek = 3600 * 24 * 7;
+
   static String encodeSession(String id, String secret) {
     return base64Encode(utf8.encode(jsonEncode({
       'id': id,
@@ -14,7 +18,7 @@ class Auth {
     return jsonDecode(utf8.decode(base64Decode(session)));
   }
 
-  static String sha256(String string) {
+  static String hash(String string) {
     return crypto.sha256.convert(utf8.encode(string)).toString();
   }
 
@@ -31,7 +35,7 @@ class Auth {
     for (final token in tokens) {
       if (token['expire'] != null &&
           token['type'] == type &&
-          token['secret'] == sha256(secret) &&
+          token['secret'] == hash(secret) &&
           token['expire'] >= DateTime.now().microsecondsSinceEpoch) {
         return token['id'];
       }
@@ -42,7 +46,7 @@ class Auth {
   static dynamic sessionVerify(
       List<Map<String, dynamic>> sessions, String secret) {
     for (final session in sessions) {
-      if (session['secret'] == sha256(secret) &&
+      if (session['secret'] == hash(secret) &&
           session['provider'] != null &&
           session['expire'] >= DateTime.now().millisecondsSinceEpoch) {
         return session['id'];
